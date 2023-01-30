@@ -22,6 +22,5 @@ for cluster in clusters/*.yaml; do
         --branch=main \
         --path=clusters/dev \
         --personal \
-        --network-policy=false \
-        --reconcile
+        --network-policy=false
 done

@@ -10,7 +10,7 @@ for cluster in clusters/*.yaml; do
     mkdir -p clusters/dev/flux-system
     if [[ -f clusters/dev/flux-system/gotk-components.yaml ]] || [[ -f clusters/dev/flux-system/gotk-sync.yaml ]] || [[ -f clusters/dev/flux-system/kustomization.yaml ]]; then exit 0; fi
     echo "flux kustomization files not fund, creating..."
-    touch clusters/dev/flux-system/gotk-components.yaml \    
-        clusters/dev/flux-system/gotk-sync.yaml \
-        clusters/dev/flux-system/kustomization.yaml
+    touch clusters/dev/flux-system/gotk-components.yaml 
+    touch clusters/dev/flux-system/gotk-sync.yaml
+    touch clusters/dev/flux-system/kustomization.yaml
 done

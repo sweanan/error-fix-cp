@@ -176,21 +176,26 @@ jobs:
         run: coral apply ./controlplane ./gitops --verbose
 
       - name: Create the flux gotk files
+        working-directory: controlplane
         shell: bash
-        run: bash ./controlplane/scripts/pipeline/createFluxGotk.sh
+        run: bash ./scripts/pipeline/createFluxGotk.sh
 
       - name: Update patches with patchesStrategicMerge
         working-directory: gitops
         run: |
           if [ -d clusters ]; then
+            echo "Update patches with patchesStrategicMerge inside"
             find clusters -type f -iname kustomization.yaml -not -path *flux-system* -exec sed -i -e 's/patches:/patchesStrategicMerge:/g' {} \;
           fi
 
       - name: Add SOPS Provider
         run: |
+          echo "Add SOPS Provider inside"
           gotk_yamls=($(find gitops/clusters -iwholename *flux-system/kustomization.yaml))
+          echo "found gotk_yamls: ${gotk_yamls[@]} "
           for gotk_yamls in "${gotk_yamls[@]}"
           do
+            echo "copying to $gotk_yamls "
             cp controlplane/scripts/templates/gotk-kustomization.yaml "$gotk_yamls"
           done
 

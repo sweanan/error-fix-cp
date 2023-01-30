@@ -219,10 +219,10 @@ jobs:
             echo "No changes made to cluster gitops repo"
           fi
 
-      - name: Bootstrap Flux
-        working-directory: controlplane
-        shell: bash
-        run: bash ./scripts/pipeline/fluxBootStrap.sh
+      # - name: Bootstrap Flux
+      #   working-directory: controlplane
+      #   shell: bash
+      #   run: bash ./scripts/pipeline/fluxBootStrap.sh
 
       - name: Archive log file
         if: always()

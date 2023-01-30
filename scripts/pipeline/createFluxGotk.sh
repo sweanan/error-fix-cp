@@ -6,8 +6,8 @@ for cluster in clusters/*.yaml; do
     cluster_name=$(yq '.metadata.labels.aksClusterName' "$cluster")
     cluster_rg=$(yq '.metadata.labels.aksClusterResourceGroup' "$cluster")
 
-    mkdir -p clusters/$cluster/flux-system
-    if [[ -f clusters/$cluster/flux-system/gotk-components.yaml ]] || [[ -f clusters/$cluster/flux-system/gotk-sync.yaml ]] || [[ -f clusters/$cluster/flux-system/kustomization.yaml ]]; then exit 0; fi
+    mkdir -p clusters/dev/flux-system
+    if [[ -f clusters/dev/flux-system/gotk-components.yaml ]] || [[ -f clusters/dev/flux-system/gotk-sync.yaml ]] || [[ -f clusters/dev/flux-system/kustomization.yaml ]]; then exit 0; fi
     echo "flux kustomization files not fund, creating..."
     touch clusters/$cluster/flux-system/gotk-components.yaml \    
         clusters/$cluster/flux-system/gotk-sync.yaml \

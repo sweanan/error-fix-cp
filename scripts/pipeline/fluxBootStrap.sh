@@ -2,6 +2,7 @@ if [[ ! -d clusters ]] || [[ -z "$(ls -A clusters/*.yaml)" ]]; then exit 0; fi
 echo "Flux bootstrap.sh"
 
 for cluster in clusters/*.yaml; do
+    echo "cluster: $cluster"
     cluster_name=$(yq '.metadata.labels.aksClusterName' "$cluster")
     cluster_rg=$(yq '.metadata.labels.aksClusterResourceGroup' "$cluster")
 
@@ -20,7 +21,7 @@ for cluster in clusters/*.yaml; do
     flux bootstrap github --owner="$GITOPS_REPO_OWNER" \
         --repository="$GITOPS_REPO" \
         --branch=main \
-        --path=clusters/$cluster \
+        --path=clusters/dev \
         --personal \
         --network-policy=false
 done

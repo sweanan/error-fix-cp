@@ -1,0 +1,11 @@
+kind: Cluster
+metadata:
+  name: dev
+  labels:
+    cloud: AzureUSGovernment
+    region: usgovvirginia
+    aksClusterName: aks-ntwkobsv-dev-lgnbb
+    aksClusterResourceGroup: rg-ntwkobsv-dev-w5hpi
+spec:
+  environments:
+    - dev

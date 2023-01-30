@@ -175,6 +175,10 @@ jobs:
       - name: Coral - Update GitOps repo
         run: coral apply ./controlplane ./gitops --verbose
 
+      - name: Create the flux gotk files
+        shell: bash
+        run: bash ./controlplane/scripts/pipeline/createFluxGotk.sh
+
       - name: Update patches with patchesStrategicMerge
         working-directory: gitops
         run: |
@@ -214,7 +218,7 @@ jobs:
         working-directory: controlplane
         shell: bash
         run: bash ./scripts/pipeline/fluxBootStrap.sh
-        
+
       - name: Archive log file
         if: always()
         uses: actions/upload-artifact@v3

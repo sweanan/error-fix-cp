@@ -140,8 +140,8 @@ else
     sed -i "s/azurestorageaccountkey.*/azurestorageaccountkey: ${base64_account_key}/" templates/istio-service/deploy/azure-secret.yaml
     sed -i "s/azurestorageaccountname.*/azurestorageaccountname: ${base64_account_name}/" templates/istio-service/deploy/azure-secret.yaml
 
-    sed -i "s/azurestorageaccountkey.*/azurestorageaccountkey: ${base64_account_key}/" templates/istio-service/deploy/secrets.yaml
-    sed -i "s/azurestorageaccountname.*/azurestorageaccountname: ${base64_account_name}/" templates/istio-service/deploy/secrets.yaml
+    # sed -i "s/azurestorageaccountkey.*/azurestorageaccountkey: ${base64_account_key}/" templates/istio-service/deploy/secrets.yaml
+    # sed -i "s/azurestorageaccountname.*/azurestorageaccountname: ${base64_account_name}/" templates/istio-service/deploy/secrets.yaml
 fi
 ##############################
 

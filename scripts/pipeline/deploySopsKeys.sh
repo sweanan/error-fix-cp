@@ -36,6 +36,8 @@ for cluster in clusters/*.yaml; do
 
     kubectl delete secret --namespace flux-system --ignore-not-found=true sops-age
 
+    kubectl create namespace flux-system
+
     echo "$sops_key" |
         kubectl create secret generic sops-age \
             --namespace=flux-system \

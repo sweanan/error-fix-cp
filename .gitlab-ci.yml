@@ -1,0 +1,161 @@
+default:
+  image: ubuntu:22.04
+
+stages:
+  - build
+
+before_script:
+  - apt-get update -y
+  - apt-get upgrade -y
+  - apt-get install git curl sudo -y
+  - curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+  - curl -s https://fluxcd.io/install.sh | sudo bash
+
+########
+# Usage:
+# * Create an Access Token under the group level under group Setting -> Access Tokens
+# * Next, use the token value as a ACCESS_TOKEN variable under group Setting -> CI/CD -> Variables
+# * Note: Only group Owner will have permission to perform this action
+#
+# * Create ACCESS_TOKEN to store the Group Access Token secret
+#   * Name: ACCESS_TOKEN
+#   * Value: Token password from the Access Token created above
+########
+
+variables:
+  CORAL_LOG_FILE: coral.log
+  GITLAB_TOKEN: $ACCESS_TOKEN
+  GITLAB_HOST: $CI_SERVER_HOST
+  GITOPS_REPO_NAME: $GITOPS_REPO_NAME
+  GITOPS_REPO_OWNER: $CI_PROJECT_NAMESPACE
+
+build-seed:
+  stage: build
+  services:
+    - docker:dind
+  tags:
+    - efr
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  artifacts:
+    name: "coral-log-${CI_JOB_STAGE}-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - ${CORAL_LOG_FILE}
+  script:
+    - echo "===== Check env values ====="
+    - |-
+      [[ -z $AZURE_CLOUD ]] && export AZURE_CLOUD=AzureCloud
+      [[ -z $SOPS_KEY_NAME ]] && export SOPS_KEY_NAME=sops-age
+
+    - echo "===== Configure Git ====="
+    - |-
+      git config --global user.name gitlab-actions
+      git config --global user.email gitlab-actions@gitlab.com
+      git config --global credential.helper store
+      git config --global push.default simple
+
+    - echo "===== Clone control-plane repo ====="
+    - git clone https://pipeline:$GITLAB_TOKEN@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git ${CI_PROJECT_NAME}
+
+    - echo "===== Clone tools-install repo ====="
+    - git clone https://github.com/benc-uk/tools-install.git toolsInstall
+
+    - echo "===== Clone Cluster GitOps repo ====="
+    - git clone "https://gitops:$GITLAB_TOKEN@${CI_SERVER_HOST}/${CI_PROJECT_NAMESPACE}/${GITOPS_REPO_NAME}.git" ${GITOPS_REPO_NAME}
+
+    - echo "===== Bootstrap local tools ====="
+    - |-
+      chmod +x toolsInstall/**.sh
+      mkdir -p $HOME/.local/bin
+      export PATH=$PATH:/$HOME/.local/bin
+      ./toolsInstall/base.sh
+      ./toolsInstall/sops.sh
+      ./toolsInstall/kubectl.sh
+      ./toolsInstall/kustomize.sh
+
+    - echo "===== Set Azure Cloud with CLI ====="
+    - az cloud set --name $AZURE_CLOUD
+
+    - echo "===== Login to Azure Cloud with CLI ====="
+    - az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET --tenant $ARM_TENANT_ID
+
+    - cd ${CI_PROJECT_NAME}/
+
+    - echo "===== Deploy and Configure Infrastructure ====="
+    - bash infrastructure/deploy.sh --gitlab
+
+    - echo "===== Update env infra vars ====="
+    - export KEYVAULT_NAME=$(awk '/KEYVAULT_NAME/  { print $2 }' infrastructure/state)
+
+    - echo "===== Generate AGE keys ====="
+    - bash ./scripts/pipeline/generateAgeKeys.sh || exit 1
+
+    - echo "===== Deploy SOPS keys ====="
+    - bash ./scripts/pipeline/deploySopsKeys.sh || exit 1
+
+    - echo "===== Update template references ====="
+    - |-
+      sed -i -- "s|<PIPELINE-REPLACES-REPO>|https://${CI_SERVER_HOST}/${CI_PROJECT_PATH}|g" templates/*.yaml
+      if [ -n "$(git status templates --porcelain)" ]; then  
+        git add templates
+        [ -n "$(git diff-index --cached HEAD)" ] && git commit -m "[ci skip] Updated template references"
+        git push origin
+      fi
+      cd ..
+
+    - echo "===== Install Coral CLI ====="
+    - |-
+      curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+      sudo apt-get install nodejs -y
+      node -v
+      npm i -g @coraldev/cli
+
+    - echo "===== Coral - Update Assignments ====="
+    - coral assign ./${CI_PROJECT_NAME} --verbose
+
+    - echo "===== Commit Assignments ====="
+    - |-
+      cd ${GITOPS_REPO_NAME}/
+      if [ -n "$(git status assignments --porcelain)" ]; then 
+        git add assignments
+        [ -n "$(git diff-index --cached HEAD)" ] && git commit -m "[ci skip] Updated cluster assignments"
+        git push origin
+      else 
+        echo "No new assignments"
+      fi
+      SHA=$(git rev-parse HEAD)
+      cd ..
+
+    - echo "===== Coral - Render templates ====="
+    - coral render ./${CI_PROJECT_NAME} ./${GITOPS_REPO_NAME} --verbose
+
+    - echo "===== Coral - Update GitOps repo ====="
+    - coral apply ./${CI_PROJECT_NAME} ./${GITOPS_REPO_NAME} --verbose
+
+    - echo "===== Update patches with patchesStrategicMerge ====="
+    - |-
+      if [ -d clusters ]; then
+        find clusters -type f -iname kustomization.yaml -not -path *flux-system* -exec sed -i -e 's/patches:/patchesStrategicMerge:/g' {} \;
+      fi
+
+    - echo "===== Add SOPS Provider ====="
+    - |-
+      gotk_yamls=($(find ${GITOPS_REPO_NAME}/clusters -iwholename *flux-system/kustomization.yaml))
+      for gotk_yamls in "${gotk_yamls[@]}"
+      do
+        cp ${CI_PROJECT_NAME}/scripts/templates/gotk-kustomization.yaml "$gotk_yamls"
+      done
+
+    - echo "===== Commit GitOps changes ====="
+    - |-
+      cd ${GITOPS_REPO_NAME}/
+      if [ -n "$(git status --porcelain)" ]; then
+        git pull
+        git add .
+        git commit -m "[ci skip] Update from control plane commit ${SHA}"
+        git push origin main
+      else 
+        echo "No changes made to cluster gitops repo"
+      fi
+      cd ..

@@ -1,0 +1,18 @@
+---
+# Source: temp/templates/values.yaml
+commonLabels:
+  prometheus: add-prometheus-target
+  update: v3
+image:
+  registry: docker.io
+  repository: bitnami/rabbitmq
+  tag: 3.11.2-debian-11-r0
+metrics:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: bitnami/rabbitmq-exporter
+    tag: 0.29.0-debian-10-r28
+  serviceMonitor:
+    enabled: true
+    honorLabels: true

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  # name: {{coral.workspace}}-{{coral.app}}-{{coral.deployment}}
+  name: {{coral.workspace}}-{{coral.app}}
+  labels:
+    istio-injection: enabled

@@ -1,0 +1,4 @@
+# repository env variable
+AZURE_CLOUD=AzureUSGovernment
+AZURE_CREDENTIALS=service_principal_credentials
+SOPS_KEY_NAME=sops_age

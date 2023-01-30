@@ -1,0 +1,37 @@
+---
+# Source: temp/templates/values.yaml
+commonLabels:
+  prometheus: add-prometheus-target
+grafana:
+  extraLabels:
+    prometheus: add-prometheus-target
+  sidecar:
+    dashboards:
+      enabled: true
+      provider:
+        allowUiUpdates: true
+      searchNamespace: ALL
+    datasources:
+      enabled: true
+      searchNamespace: ALL
+kube-state-metrics:
+  prometheus:
+    monitor:
+      additionalLabels:
+        prometheus: add-prometheus-target
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeScheduler:
+  enabled: false
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+prometheus-node-exporter:
+  prometheus:
+    monitor:
+      additionalLabels:
+        prometheus: add-prometheus-target

@@ -1,0 +1,227 @@
+name: Coral Secure Build
+
+########
+# Usage:
+# * Update env.GITOPS_REPO to point to your own Cluster GitOps Repo
+# * Create a GitHub Actions secret:
+#   * Name: GITOPS_PAT
+#   * Value: A Personal Access Token with the `repo` scope
+########
+
+on:
+  workflow_dispatch:
+    inputs:
+      zarf:
+        type: boolean
+        default: false
+        description: "Select to run Zarf package and upload."
+  push:
+    branches: [main]
+
+concurrency: transform
+
+env:
+  AZURE_LOG_ANALYTICS_KEY: ${{ secrets.AZURE_LOG_ANALYTICS_KEY }}
+  AZURE_LOG_ANALYTICS_WORKSPACE_ID: ${{ secrets.AZURE_LOG_ANALYTICS_WORKSPACE_ID }}
+  CORAL_LOG_FILE: coral.log
+  GITHUB_TOKEN: ${{ secrets.GITOPS_PAT }}
+  GITOPS_REPO: <owner>/<repository> # TODO: Replace this with your own repository
+  SOPS_PUBLIC_KEY: ${{ secrets.SOPS_PUBLIC_KEY }}
+  SS_PUBLIC_KEY: ${{ secrets.SS_PUBLIC_KEY }}
+
+  # optional vars
+  AZURE_CLOUD: ${{ secrets.AZURE_CLOUD }} # defaults to AzureCloud
+  SOPS_KEY_NAME: ${{ secrets.SOPS_KEY_NAME }} # defaults to sops-age
+  WORKLOAD_NAME: ${{ secrets.WORKLOAD_NAME }} # defaults to ntwkobsv
+  REGION: ${{ secrets.REGION }} # defaults to eastus
+  DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }} # defaults to dev
+  RESOURCE_GROUP_NAME: ${{ secrets.RESOURCE_GROUP_NAME }} # Is generated if not defined
+  STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }} # Is generated if not defined
+  AKV_NAME: ${{ secrets.AKV_NAME }} # Is generated if not defined
+  ACR_NAME: ${{ secrets.ACR_NAME }} # Is generated if not defined
+  AKS_NAME: ${{ secrets.AKS_NAME }} # Is generated if not defined
+  VM_SIZE: ${{ secrets.VM_SIZE }} # defaults to standard_e2ds_v5
+
+  # Zarf vars for image retrieval if no ACR_NAME present
+  CONTAINER_REGISTRY_URL: ${{ secrets.CONTAINER_REGISTRY_URL }}
+  CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
+  CONTAINER_REGISTRY_ACCESS_TOKEN: ${{ secrets.CONTAINER_REGISTRY_ACCESS_TOKEN }}
+
+jobs:
+  transform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for ENV defaults
+        run: |
+          [[ -z $AZURE_CLOUD ]] && echo "AZURE_CLOUD=AzureCloud" >> $GITHUB_ENV
+          [[ -z $SOPS_KEY_NAME ]] && echo "SOPS_KEY_NAME=sops-age" >> $GITHUB_ENV
+          echo "GITOPS_REPO_OWNER=$(echo $GITOPS_REPO  | awk -F "/" '{ print $1 }')" >> $GITHUB_ENV
+
+      - name: Configure Git
+        run: |
+          git config --global user.name github-actions
+          git config --global user.email github-actions@github.com
+          git config --global credential.helper store
+          mkdir -p ~/.config/git
+          echo "https://git:${{ secrets.GITOPS_PAT }}@github.com/" > ~/.config/git/credentials
+
+      - name: Clone Control Plane Repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository }}
+          path: "controlplane"
+          token: ${{ secrets.GITOPS_PAT }}
+
+      - name: Checkout tools-install repo
+        uses: actions/checkout@v3
+        with:
+          repository: benc-uk/tools-install
+          path: tools-install
+
+      - name: Bootstrap local tools
+        shell: bash
+        run: |
+          chmod +x tools-install/**.sh
+          echo $HOME
+          mkdir -p $HOME/.local/bin
+          ls -la $HOME/.local/bin         
+          cd tools-install
+          ./base.sh
+          ./sops.sh
+          ./kubectl.sh
+          ./kustomize.sh
+          # ls -la $HOME/.local/bin
+          echo $PATH
+
+      - name: Install flux
+        shell: bash
+        run: curl -s https://fluxcd.io/install.sh | sudo bash
+
+      - name: Login to Azure Cloud with CLI
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          environment: ${{ env.AZURE_CLOUD }}
+
+      - name: Deploy and Configure Infrastructure
+        working-directory: controlplane
+        shell: bash
+        run: bash infrastructure/deploy.sh --github
+
+      - name: Set ENV vars
+        working-directory: controlplane
+        shell: bash
+        run: |
+          echo "KEYVAULT_NAME=$(awk '/KEYVAULT_NAME/  { print $2 }' infrastructure/state)" >> $GITHUB_ENV
+          USER_INPUT=${{ github.event.inputs.zarf }}
+          echo "RUN_ZARF=${USER_INPUT:-"false"}" >> $GITHUB_ENV
+
+      - name: Generate AGE keys
+        id: generate-age-keys
+        working-directory: controlplane
+        shell: bash
+        run: bash ./scripts/pipeline/generateAgeKeys.sh
+
+      - name: Deploy SOPS keys
+        working-directory: controlplane
+        shell: bash
+        run: bash ./scripts/pipeline/deploySopsKeys.sh
+
+      - name: Get AKV Secrets
+        shell: bash
+        run: bash ./controlplane/scripts/pipeline/populateSecrets.sh
+
+      - name: Update template references
+        working-directory: controlplane
+        run: |
+          sed -i -- "s|<PIPELINE-REPLACES-REPO>|${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}|g" templates/*.yaml
+          if [ -n "$(git status templates --porcelain)" ]; then
+            git add templates
+            [ -n "$(git diff-index --cached HEAD)" ] && git commit -m "[no ci] Updated template references"
+            git push origin
+          fi
+
+      - name: Clone Cluster GitOps Repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.GITOPS_REPO }}
+          path: "gitops"
+          token: ${{ secrets.GITOPS_PAT }}
+
+      - name: Install Coral CLI
+        run: npm i -g @coraldev/cli
+
+      - name: Coral - Update Assignments
+        run: coral assign ./controlplane --verbose
+
+      - name: Commit Assignments
+        id: commit_assignments
+        working-directory: controlplane
+        run: |
+          if [ -n "$(git status assignments --porcelain)" ]; then
+            git add assignments
+            [ -n "$(git diff-index --cached HEAD)" ] && git commit -m "[no ci] Updated cluster assignments"
+            git push origin
+          else
+            echo "No new assignments"
+          fi
+
+          SHA=$(git rev-parse HEAD)
+          echo "::set-output name=SHA::$SHA"
+
+      - name: Coral - Render templates
+        run: coral render ./controlplane ./gitops --verbose
+
+      - name: Coral - Update GitOps repo
+        run: coral apply ./controlplane ./gitops --verbose
+
+      - name: Update patches with patchesStrategicMerge
+        working-directory: gitops
+        run: |
+          if [ -d clusters ]; then
+            find clusters -type f -iname kustomization.yaml -not -path *flux-system* -exec sed -i -e 's/patches:/patchesStrategicMerge:/g' {} \;
+          fi
+
+      - name: Add SOPS Provider
+        run: |
+          gotk_yamls=($(find gitops/clusters -iwholename *flux-system/kustomization.yaml))
+          for gotk_yamls in "${gotk_yamls[@]}"
+          do
+            cp controlplane/scripts/templates/gotk-kustomization.yaml "$gotk_yamls"
+          done
+
+      - name: Update Secrets
+        shell: bash
+        run: bash ./controlplane/scripts/pipeline/getUpdatedSecrets.sh
+
+      - name: Encrypt SOPS Secrets
+        shell: bash
+        run: bash ./controlplane/scripts/pipeline/encryptSecrets.sh
+
+      - name: Commit GitOps changes
+        working-directory: gitops
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git pull
+            git add .
+            git commit -m "Update from control plane commit ${{ steps.commit_assignments.outputs.SHA }}"
+            git push origin main
+          else
+            echo "No changes made to cluster gitops repo"
+          fi
+
+      - name: Archive log file
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coral-log-file
+          path: ${{ env.CORAL_LOG_FILE }}
+
+      - name: Package and Upload Zarf Tar
+        if: env.RUN_ZARF == 'true'
+        run: |
+          sudo ./controlplane/scripts/pipeline/installZarf.sh -v v0.23.2 -t cli 
+          ./controlplane/scripts/pipeline/uploadZarf.sh
+      # - name: Encrypt Sealed Secrets
+      #   shell: bash
+      #   run: bash ./controlplane/scripts/pipeline/encryptSecrets.sh ss

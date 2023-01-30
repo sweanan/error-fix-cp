@@ -1,0 +1,28 @@
+---
+# Source: temp/templates/zarf.yaml
+kind: ZarfPackageConfig
+metadata:
+  name: kube-prometheus-stack
+  description: "Deploys the base kube-prometheus-stack helm chart"
+components:
+  - name: kube-prometheus-stack
+    required: true
+    charts:
+      - name: kube-prometheus-stack
+        releaseName: kube-prometheus-stack
+        url: https://prometheus-community.github.io/helm-charts
+        version: 41.7.0
+        namespace: infrastructure
+        valuesFiles:
+          - values.yaml
+    images:
+      - quay.io/prometheus/alertmanager:v0.24.0
+      - k8s.gcr.io/ingress-nginx/kube-webhook-certgen:v1.3.0
+      - quay.io/prometheus-operator/prometheus-operator:v0.60.1
+      - quay.io/prometheus-operator/prometheus-config-reloader:v0.60.1
+      - quay.io/thanos/thanos:v0.28.1
+      - quay.io/prometheus/prometheus:v2.39.1
+      - quay.io/kiwigrid/k8s-sidecar:1.19.2
+      - grafana/grafana:9.2.2
+      - registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.6.0
+      - quay.io/prometheus/node-exporter:v1.3.1

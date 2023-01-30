@@ -1,0 +1,19 @@
+kind: ZarfPackageConfig
+metadata:
+  name: {{name}}-zarf
+  description: "{{coral.app}} app Zarf package"
+
+components:
+  - name: {{name}}-zarf
+    required: true
+    manifests:
+      - name: {{name}}-zarf
+        namespace: {{coral.workspace}}-{{coral.app}}
+        files:
+          - standard-pvc.yaml
+          - namespace.yaml
+          - service.yaml
+          - deployment.yaml
+          - config.yaml
+    images:
+      - {{image}}

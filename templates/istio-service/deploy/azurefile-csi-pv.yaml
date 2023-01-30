@@ -20,9 +20,9 @@ spec:
     readOnly: false
     volumeHandle: {{coral.workspace}}-{{coral.app}} # make sure this volumeid is unique in the cluster
     volumeAttributes:
-      resourceGroup: <storage-rg-name> 
-      storageAccount: <storage-account-name> 
-      shareName: <file-share-name> 
+      resourceGroup: rg-ntwkobsv-dev-w5hpi
+      storageAccount: stntwkobsvdevw5hpi
+      shareName: netobs
     nodeStageSecretRef:
       name: {{name}}-azure-secret
       namespace: {{coral.workspace}}-{{coral.app}}

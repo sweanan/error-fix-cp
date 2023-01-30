@@ -191,7 +191,7 @@ jobs:
       - name: Add SOPS Provider
         run: |
           echo "Add SOPS Provider inside"
-          gotk_yamls=($(find gitops/clusters -iwholename *flux-system/kustomization.yaml))
+          gotk_yamls=($(find gitops/clusters/dev -iwholename *flux-system/kustomization.yaml))
           echo "found gotk_yamls: ${gotk_yamls[@]} "
           for gotk_yamls in "${gotk_yamls[@]}"
           do

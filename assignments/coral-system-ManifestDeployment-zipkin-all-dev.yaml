@@ -1,0 +1,10 @@
+kind: ApplicationAssignment
+metadata:
+  name: coral-system-ManifestDeployment-zipkin-all-dev
+spec:
+  application:
+    kind: ManifestDeployment
+    name: zipkin
+    workspace: coral-system
+    target: all
+  cluster: dev

@@ -1,0 +1,10 @@
+kind: ApplicationAssignment
+metadata:
+  name: coral-system-ManifestDeployment-istio-all-dev
+spec:
+  application:
+    kind: ManifestDeployment
+    name: istio
+    workspace: coral-system
+    target: all
+  cluster: dev

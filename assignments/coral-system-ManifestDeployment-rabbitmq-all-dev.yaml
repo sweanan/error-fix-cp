@@ -1,0 +1,10 @@
+kind: ApplicationAssignment
+metadata:
+  name: coral-system-ManifestDeployment-rabbitmq-all-dev
+spec:
+  application:
+    kind: ManifestDeployment
+    name: rabbitmq
+    workspace: coral-system
+    target: all
+  cluster: dev

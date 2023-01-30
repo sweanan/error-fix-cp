@@ -1,0 +1,10 @@
+kind: ApplicationAssignment
+metadata:
+  name: coral-system-ManifestDeployment-kibana-all-dev
+spec:
+  application:
+    kind: ManifestDeployment
+    name: kibana
+    workspace: coral-system
+    target: all
+  cluster: dev

@@ -2,6 +2,6 @@ kind: ApplicationTemplate
 metadata:
   name: external-service-advanced
 spec:
-  repo: <PIPELINE-REPLACES-REPO>
+  repo: https://github.com/sweanan/error-fix-cp
   ref: main
   path: templates/external-service-advanced/template.yaml

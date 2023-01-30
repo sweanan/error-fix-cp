@@ -1,0 +1,10 @@
+kind: ApplicationAssignment
+metadata:
+  name: coral-system-ManifestDeployment-namespaces-all-dev
+spec:
+  application:
+    kind: ManifestDeployment
+    name: namespaces
+    workspace: coral-system
+    target: all
+  cluster: dev

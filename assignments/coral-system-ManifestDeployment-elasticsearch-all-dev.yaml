@@ -1,0 +1,10 @@
+kind: ApplicationAssignment
+metadata:
+  name: coral-system-ManifestDeployment-elasticsearch-all-dev
+spec:
+  application:
+    kind: ManifestDeployment
+    name: elasticsearch
+    workspace: coral-system
+    target: all
+  cluster: dev

@@ -1,0 +1,10 @@
+kind: ApplicationAssignment
+metadata:
+  name: coral-system-ManifestDeployment-azure-sql-edge-all-dev
+spec:
+  application:
+    kind: ManifestDeployment
+    name: azure-sql-edge
+    workspace: coral-system
+    target: all
+  cluster: dev

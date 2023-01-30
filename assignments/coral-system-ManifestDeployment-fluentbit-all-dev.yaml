@@ -1,0 +1,10 @@
+kind: ApplicationAssignment
+metadata:
+  name: coral-system-ManifestDeployment-fluentbit-all-dev
+spec:
+  application:
+    kind: ManifestDeployment
+    name: fluentbit
+    workspace: coral-system
+    target: all
+  cluster: dev

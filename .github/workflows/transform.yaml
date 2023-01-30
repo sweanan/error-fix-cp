@@ -194,7 +194,6 @@ jobs:
           gotk_yamls=($(find gitops/clusters/dev -iwholename *flux-system/kustomization.yaml))
           echo "found gotk_yamls: gotk_yamls"
           for gotk_yamls in "${gotk_yamls[@]}"
-          echo "found gotk_yamls1: gotk_yamls"
           do
             echo "copying to $gotk_yamls "
             cp controlplane/scripts/templates/gotk-kustomization.yaml "$gotk_yamls"

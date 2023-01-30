@@ -183,29 +183,29 @@ EOF
     pushToState AKS_NAME "$aks_name"
 
     echo "Obtain AKS Credentails..."
-    az aks get-credentials \
-        --resource-group "$resource_group_name" \
-        --name "$aks_name" \
-        --overwrite-existing
+    # az aks get-credentials \
+    #     --resource-group "$resource_group_name" \
+    #     --name "$aks_name" \
+    #     --overwrite-existing
 
-    if ! (kubectl get namespaces | grep "flux-system" -q); then
-        echo "Configure flux on AKS Cluster...$aks_name"
-        if [[ $source_control = "--gitlab" ]]; then
-            flux bootstrap gitlab --hostname="$GITLAB_HOST" \
-                --token-auth \
-                --owner="$GITOPS_REPO_OWNER" \
-                --repository="$GITOPS_REPO_NAME" \
-                --branch=main \
-                --namespace=flux-system \
-                --path=clusters/$env
-        elif [[ $source_control = "--github" ]]; then
-            flux bootstrap github --owner="$GITOPS_REPO_OWNER" \
-                --repository="$GITOPS_REPO" \
-                --branch=main \
-                --path=clusters/$env \
-                --personal \
-                --network-policy=false
-        fi
-    fi
+    # if ! (kubectl get namespaces | grep "flux-system" -q); then
+    #     echo "Configure flux on AKS Cluster...$aks_name"
+    #     if [[ $source_control = "--gitlab" ]]; then
+    #         flux bootstrap gitlab --hostname="$GITLAB_HOST" \
+    #             --token-auth \
+    #             --owner="$GITOPS_REPO_OWNER" \
+    #             --repository="$GITOPS_REPO_NAME" \
+    #             --branch=main \
+    #             --namespace=flux-system \
+    #             --path=clusters/$env
+    #     elif [[ $source_control = "--github" ]]; then
+    #         flux bootstrap github --owner="$GITOPS_REPO_OWNER" \
+    #             --repository="$GITOPS_REPO" \
+    #             --branch=main \
+    #             --path=clusters/$env \
+    #             --personal \
+    #             --network-policy=false
+    #     fi
+    # fi
 fi
 ##############################

@@ -20,7 +20,8 @@ for cluster in clusters/*.yaml; do
     flux bootstrap github --owner="$GITOPS_REPO_OWNER" \
         --repository="$GITOPS_REPO" \
         --branch=main \
-        --path=clusters/$env \
+        --path=clusters/dev \
         --personal \
-        --network-policy=false
+        --network-policy=false \
+        --reconcile
 done

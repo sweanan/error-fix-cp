@@ -2,6 +2,6 @@ kind: ApplicationTemplate
 metadata:
   name: istio-service
 spec:
-  repo: <PIPELINE-REPLACES-REPO>
+  repo: https://github.com/sweanan/error-fix-cp
   ref: main
   path: templates/istio-service/template.yaml

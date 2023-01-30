@@ -25,7 +25,7 @@ env:
   AZURE_LOG_ANALYTICS_WORKSPACE_ID: ${{ secrets.AZURE_LOG_ANALYTICS_WORKSPACE_ID }}
   CORAL_LOG_FILE: coral.log
   GITHUB_TOKEN: ${{ secrets.GITOPS_PAT }}
-  GITOPS_REPO: <owner>/<repository> # TODO: Replace this with your own repository
+  GITOPS_REPO: sweanan/error-fix-cp-gitops # TODO: Replace this with your own repository
   SOPS_PUBLIC_KEY: ${{ secrets.SOPS_PUBLIC_KEY }}
   SS_PUBLIC_KEY: ${{ secrets.SS_PUBLIC_KEY }}
 

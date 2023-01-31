@@ -5,7 +5,9 @@ for cluster in clusters/*.yaml; do
     echo "cluster: $cluster"
     cluster_name=$(yq '.metadata.labels.aksClusterName' "$cluster")
     cluster_rg=$(yq '.metadata.labels.aksClusterResourceGroup' "$cluster")
-    echo "cluster_name: $cluster_name"
+    cluster_info=$(yq '.metadata.name' "$cluster")
+    echo "cluster_info: $cluster_info"
+
 
     # Get cluster's k8s credentials
     cluster_creds=$(az aks get-credentials --name "$cluster_name" --resource-group "$cluster_rg" -f -)
@@ -31,7 +33,7 @@ for cluster in clusters/*.yaml; do
         flux bootstrap github --owner="$GITOPS_REPO_OWNER" \
             --repository="$GITOPS_REPO" \
             --branch=main \
-            --path=clusters/dev \
+            --path=clusters/$cluster_info \
             --personal \
             --network-policy=false
     fi

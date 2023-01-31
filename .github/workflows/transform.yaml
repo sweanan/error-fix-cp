@@ -175,10 +175,21 @@ jobs:
       - name: Coral - Update GitOps repo
         run: coral apply ./controlplane ./gitops --verbose
 
+      # - name: Create the flux gotk files
+      #   working-directory: gitops
+      #   shell: bash
+      #   run: bash ./scripts/pipeline/createFluxGotk.sh
+
       - name: Create the flux gotk files
-        working-directory: controlplane
+        working-directory: gitops
         shell: bash
-        run: bash ./scripts/pipeline/createFluxGotk.sh
+        run: |
+          if [ -d clusters ]; then
+            mkdir -p clusters/dev/flux-system
+            touch clusters/dev/flux-system/gotk-components.yaml 
+            touch clusters/dev/flux-system/gotk-sync.yaml
+            touch clusters/dev/flux-system/kustomization.yaml
+          fi
 
       - name: Update patches with patchesStrategicMerge
         working-directory: gitops

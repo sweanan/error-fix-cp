@@ -36,5 +36,13 @@ for cluster in clusters/*.yaml; do
             --path=clusters/$cluster_info \
             --personal \
             --network-policy=false
+    elif [[ $source_control = "--gitlab" ]]; then
+        flux bootstrap gitlab --hostname="$GITLAB_HOST" \
+            --token-auth \
+            --owner="$GITOPS_REPO_OWNER" \
+            --repository="$GITOPS_REPO_NAME" \
+            --branch=main \
+            --namespace=flux-system \
+            --path=clusters/$cluster_info
     fi
 done

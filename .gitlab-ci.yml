@@ -133,6 +133,9 @@ build-seed:
     - echo "===== Coral - Update GitOps repo ====="
     - coral apply ./${CI_PROJECT_NAME} ./${GITOPS_REPO_NAME} --verbose
 
+    - echo "===== Create the flux gotk files ====="
+    - bash ./scripts/pipeline/createFluxGotk.sh || exit 1
+
     - echo "===== Update patches with patchesStrategicMerge ====="
     - |-
       if [ -d clusters ]; then
@@ -159,3 +162,6 @@ build-seed:
         echo "No changes made to cluster gitops repo"
       fi
       cd ..
+
+    - echo "===== Bootstrap Flux ====="
+    - bash ./scripts/pipeline/fluxBootStrap.sh --gitlab

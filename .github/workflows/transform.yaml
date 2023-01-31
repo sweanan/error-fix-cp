@@ -176,47 +176,35 @@ jobs:
         run: coral apply ./controlplane ./gitops --verbose
 
       - name: Create the flux gotk files
-        # working-directory: gitops
         shell: bash
         run: bash ./controlplane/scripts/pipeline/createFluxGotk.sh
 
-      # - name: Create the flux gotk files
-      #   working-directory: gitops
-      #   shell: bash
-      #   run: |
-      #     if [ -d clusters ]; then
-      #       mkdir -p clusters/dev/flux-system
-      #       touch clusters/dev/flux-system/gotk-components.yaml 
-      #       touch clusters/dev/flux-system/gotk-sync.yaml
-      #       touch clusters/dev/flux-system/kustomization.yaml
-      #     fi
+      - name: Update patches with patchesStrategicMerge
+        working-directory: gitops
+        run: |
+          if [ -d clusters ]; then
+            echo "Update patches with patchesStrategicMerge inside"
+            find clusters -type f -iname kustomization.yaml -not -path *flux-system* -exec sed -i -e 's/patches:/patchesStrategicMerge:/g' {} \;
+          fi
 
-      # - name: Update patches with patchesStrategicMerge
-      #   working-directory: gitops
-      #   run: |
-      #     if [ -d clusters ]; then
-      #       echo "Update patches with patchesStrategicMerge inside"
-      #       find clusters -type f -iname kustomization.yaml -not -path *flux-system* -exec sed -i -e 's/patches:/patchesStrategicMerge:/g' {} \;
-      #     fi
+      - name: Add SOPS Provider
+        run: |
+          echo "Add SOPS Provider inside"
+          gotk_yamls=($(find gitops/clusters/dev -iwholename *flux-system/kustomization.yaml))
+          echo "found gotk_yamls: gotk_yamls"
+          for gotk_yamls in "${gotk_yamls[@]}"
+          do
+            echo "copying to $gotk_yamls "
+            cp controlplane/scripts/templates/gotk-kustomization.yaml "$gotk_yamls"
+          done
 
-      # - name: Add SOPS Provider
-      #   run: |
-      #     echo "Add SOPS Provider inside"
-      #     gotk_yamls=($(find gitops/clusters/dev -iwholename *flux-system/kustomization.yaml))
-      #     echo "found gotk_yamls: gotk_yamls"
-      #     for gotk_yamls in "${gotk_yamls[@]}"
-      #     do
-      #       echo "copying to $gotk_yamls "
-      #       cp controlplane/scripts/templates/gotk-kustomization.yaml "$gotk_yamls"
-      #     done
+      - name: Update Secrets
+        shell: bash
+        run: bash ./controlplane/scripts/pipeline/getUpdatedSecrets.sh
 
-      # - name: Update Secrets
-      #   shell: bash
-      #   run: bash ./controlplane/scripts/pipeline/getUpdatedSecrets.sh
-
-      # - name: Encrypt SOPS Secrets
-      #   shell: bash
-      #   run: bash ./controlplane/scripts/pipeline/encryptSecrets.sh
+      - name: Encrypt SOPS Secrets
+        shell: bash
+        run: bash ./controlplane/scripts/pipeline/encryptSecrets.sh
 
       - name: Commit GitOps changes
         working-directory: gitops
@@ -230,23 +218,23 @@ jobs:
             echo "No changes made to cluster gitops repo"
           fi
 
-      # # - name: Bootstrap Flux
-      # #   working-directory: controlplane
-      # #   shell: bash
-      # #   run: bash ./scripts/pipeline/fluxBootStrap.sh
+      - name: Bootstrap Flux
+        working-directory: controlplane
+        shell: bash
+        run: bash ./scripts/pipeline/fluxBootStrap.sh
 
-      # - name: Archive log file
-      #   if: always()
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: coral-log-file
-      #     path: ${{ env.CORAL_LOG_FILE }}
+      - name: Archive log file
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coral-log-file
+          path: ${{ env.CORAL_LOG_FILE }}
 
-      # - name: Package and Upload Zarf Tar
-      #   if: env.RUN_ZARF == 'true'
-      #   run: |
-      #     sudo ./controlplane/scripts/pipeline/installZarf.sh -v v0.23.2 -t cli 
-      #     ./controlplane/scripts/pipeline/uploadZarf.sh
-      # # - name: Encrypt Sealed Secrets
-      # #   shell: bash
-      # #   run: bash ./controlplane/scripts/pipeline/encryptSecrets.sh ss
+      - name: Package and Upload Zarf Tar
+        if: env.RUN_ZARF == 'true'
+        run: |
+          sudo ./controlplane/scripts/pipeline/installZarf.sh -v v0.23.2 -t cli 
+          ./controlplane/scripts/pipeline/uploadZarf.sh
+      # - name: Encrypt Sealed Secrets
+      #   shell: bash
+      #   run: bash ./controlplane/scripts/pipeline/encryptSecrets.sh ss

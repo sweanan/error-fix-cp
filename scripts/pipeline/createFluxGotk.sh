@@ -1,4 +1,4 @@
-if [[ ! -d clusters ]] || [[ -z "$(ls -A clusters/*.yaml)" ]]; then exit 0; fi
+cd gitops
 echo "createFluxGotk.sh"
 
 for cluster in clusters/*/; do

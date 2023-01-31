@@ -176,7 +176,7 @@ jobs:
         run: coral apply ./controlplane ./gitops --verbose
 
       - name: Create the flux gotk files
-        working-directory: gitops
+        # working-directory: gitops
         shell: bash
         run: bash ./controlplane/scripts/pipeline/createFluxGotk.sh
 

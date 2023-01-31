@@ -221,7 +221,7 @@ jobs:
       - name: Bootstrap Flux
         working-directory: controlplane
         shell: bash
-        run: bash ./scripts/pipeline/fluxBootStrap.sh
+        run: bash ./scripts/pipeline/fluxBootStrap.sh --github
 
       - name: Archive log file
         if: always()

@@ -1,16 +1,14 @@
 if [[ ! -d clusters ]] || [[ -z "$(ls -A clusters/*.yaml)" ]]; then exit 0; fi
 echo "createFluxGotk.sh"
 
-for cluster in clusters/*.yaml; do
+for cluster in clusters/*/; do
     echo "cluster: $cluster"
     # cluster: clusters/dev.yaml
-    cluster_name=$(yq '.metadata.labels.aksClusterName' "$cluster")
-    cluster_rg=$(yq '.metadata.labels.aksClusterResourceGroup' "$cluster")
-
-    mkdir -p clusters/dev/flux-system
-    if [[ -f clusters/dev/flux-system/gotk-components.yaml ]] || [[ -f clusters/dev/flux-system/gotk-sync.yaml ]] || [[ -f clusters/dev/flux-system/kustomization.yaml ]]; then exit 0; fi
+    
+    mkdir -p ./gitops/clusters/$cluster/flux-system
+    if [[ -f ./gitops/clusters/$cluster/flux-system/gotk-components.yaml ]] || [[ -f ./gitops/clusters/$cluster/flux-system/gotk-sync.yaml ]] || [[ -f ./gitops/clusters/$cluster/flux-system/kustomization.yaml ]]; then exit 0; fi
     echo "flux kustomization files not fund, creating..."
-    touch clusters/dev/flux-system/gotk-components.yaml 
-    touch clusters/dev/flux-system/gotk-sync.yaml
-    touch clusters/dev/flux-system/kustomization.yaml
+    touch ./gitops/clusters/$cluster/flux-system/gotk-components.yaml 
+    touch ./gitops/clusters/$cluster/flux-system/gotk-sync.yaml
+    touch ./gitops/clusters/$cluster/flux-system/kustomization.yaml
 done

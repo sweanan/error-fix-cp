@@ -218,17 +218,17 @@ jobs:
       #   shell: bash
       #   run: bash ./controlplane/scripts/pipeline/encryptSecrets.sh
 
-      # - name: Commit GitOps changes
-      #   working-directory: gitops
-      #   run: |
-      #     if [ -n "$(git status --porcelain)" ]; then
-      #       git pull
-      #       git add .
-      #       git commit -m "Update from control plane commit ${{ steps.commit_assignments.outputs.SHA }}"
-      #       git push origin main
-      #     else
-      #       echo "No changes made to cluster gitops repo"
-      #     fi
+      - name: Commit GitOps changes
+        working-directory: gitops
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git pull
+            git add .
+            git commit -m "Update from control plane commit ${{ steps.commit_assignments.outputs.SHA }}"
+            git push origin main
+          else
+            echo "No changes made to cluster gitops repo"
+          fi
 
       # # - name: Bootstrap Flux
       # #   working-directory: controlplane

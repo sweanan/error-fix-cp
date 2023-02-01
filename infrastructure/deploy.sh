@@ -4,7 +4,7 @@ set -euo pipefail
 deploy_infra="$DEPLOY_INFRA"
 echo "$deploy_infra"
 
-if [[ "$deploy_infra" != "true"]]; then
+if [[ "$deploy_infra" != "true" ]]; then
     echo "Infrastructure deployment not required, skipping..."
     exit -1
 fi

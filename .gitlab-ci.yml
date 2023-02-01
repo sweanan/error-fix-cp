@@ -86,7 +86,8 @@ build-seed:
     - bash infrastructure/deploy.sh --gitlab
 
     - echo "===== Update env infra vars ====="
-    - export KEYVAULT_NAME=$(awk '/KEYVAULT_NAME/  { print $2 }' infrastructure/state)
+    - |-
+      [[-f infrastructure/state ]] && export KEYVAULT_NAME=$(awk '/KEYVAULT_NAME/  { print $2 }' infrastructure/state)
 
     - echo "===== Generate AGE keys ====="
     - bash ./scripts/pipeline/generateAgeKeys.sh || exit 1

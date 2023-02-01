@@ -114,7 +114,7 @@ jobs:
         working-directory: controlplane
         shell: bash
         run: |
-          echo "KEYVAULT_NAME=$(awk '/KEYVAULT_NAME/  { print $2 }' infrastructure/state)" >> $GITHUB_ENV
+          [[-f infrastructure/state ]] && echo "KEYVAULT_NAME=$(awk '/KEYVAULT_NAME/  { print $2 }' infrastructure/state)" >> $GITHUB_ENV 
           USER_INPUT=${{ github.event.inputs.zarf }}
           echo "RUN_ZARF=${USER_INPUT:-"false"}" >> $GITHUB_ENV
 

@@ -1,5 +1,0 @@
-RESOURCE_GROUP_NAME: rg-ntwkobsv-dev-w5hpi
-KEYVAULT_NAME: kv-ntwkobsv-dev-w5hpi
-ACR_NAME: crntwkobsvdevw5hpi
-STORAGE_ACCOUNT_NAME: stntwkobsvdevw5hpi
-AKS_NAME: aks-ntwkobsv-dev-lgnbb

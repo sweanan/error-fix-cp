@@ -6,7 +6,7 @@ echo "$deploy_infra"
 
 if [[ "$deploy_infra" != "true" ]]; then
     echo "Infrastructure deployment not required, skipping..."
-    exit -1
+    exit 0;
 fi
 
 echo "Not skipping Infrastructure deployment ..."

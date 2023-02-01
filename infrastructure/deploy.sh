@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+deploy_infra="$DEPLOY_INFRA"
+if [[ "$deploy_infra" != "true"]]; then
+    echo "Infrastructure deployment not required, skipping..."
+    exit -1
+fi
+echo "Not skipping Infrastructure deployment ..."
 readonly state_file=infrastructure/state
 
 if [[ -f $state_file ]]; then

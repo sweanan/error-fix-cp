@@ -30,6 +30,7 @@ env:
   SS_PUBLIC_KEY: ${{ secrets.SS_PUBLIC_KEY }}
 
   # optional vars
+  DEPLOY_INFRA: ${{ secrets.DEPLOY_INFRA }} # defaults to true
   AZURE_CLOUD: ${{ secrets.AZURE_CLOUD }} # defaults to AzureCloud
   SOPS_KEY_NAME: ${{ secrets.SOPS_KEY_NAME }} # defaults to sops-age
   WORKLOAD_NAME: ${{ secrets.WORKLOAD_NAME }} # defaults to ntwkobsv
@@ -53,6 +54,7 @@ jobs:
     steps:
       - name: Check for ENV defaults
         run: |
+          [[ -z $DEPLOY_INFRA ]] && echo "DEPLOY_INFRA=true" >> $GITHUB_ENV
           [[ -z $AZURE_CLOUD ]] && echo "AZURE_CLOUD=AzureCloud" >> $GITHUB_ENV
           [[ -z $SOPS_KEY_NAME ]] && echo "SOPS_KEY_NAME=sops-age" >> $GITHUB_ENV
           echo "GITOPS_REPO_OWNER=$(echo $GITOPS_REPO  | awk -F "/" '{ print $1 }')" >> $GITHUB_ENV
